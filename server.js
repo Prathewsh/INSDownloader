@@ -17,7 +17,7 @@ app.use(express.static('public'));
 app.post('/download', async (req, res) => {
     try {
         const { url } = req.body;
-        
+
         if (!url || !isValidInstagramUrl(url)) {
             return res.status(400).json({ 
                 error: 'Invalid Instagram URL',
@@ -47,11 +47,11 @@ app.post('/download', async (req, res) => {
                 '--disable-features=IsolateOrigins,site-per-process'
             ]
         });
-        
+
         const page = await browser.newPage();
         await page.setUserAgent('Instagram 269.0.0.18.75 Android (28/9; 320dpi; 720x1468; Xiaomi; Redmi 6A; cereus; qcom; en_US; 314665256)');
         await page.setViewport({ width: 375, height: 812, isMobile: true });
-        
+
         console.log('Navigating to Instagram URL...');
         await page.goto(url, { 
             waitUntil: 'networkidle2', 
@@ -60,7 +60,7 @@ app.post('/download', async (req, res) => {
 
         console.log('Waiting for video element...');
         await page.waitForSelector('video', { timeout: 15000 });
-        
+
         const videoUrl = await page.evaluate(() => {
             const video = document.querySelector('video');
             return video ? video.src : null;
@@ -99,9 +99,12 @@ app.post('/download', async (req, res) => {
 });
 
 async function tryOfficialApi(url) {
-    const shortcode = url.split('/').filter(Boolean).pop();
+    const parsedUrl = new URL(url);
+    const parts = parsedUrl.pathname.split('/').filter(Boolean);
+    const shortcode = parts.pop();
+
     const apiUrl = `https://www.instagram.com/p/${shortcode}/?__a=1&__d=dis`;
-    
+
     const response = await axios.get(apiUrl, {
         headers: {
             'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1',
